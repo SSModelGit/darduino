@@ -1,4 +1,4 @@
-FROM ros:melodic-robot-bionic
+FROM ubuntu:bionic
 
 ENV HOME /home/developer
 WORKDIR /home/developer
@@ -12,21 +12,22 @@ RUN export uid=1000 gid=1000 && \
 	echo "developer ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/developer && \
 	chmod 0440 /etc/sudoers.d/developer && \
 	chown ${uid}:${gid} -R /home/developer && \
+	export DEBIAN_FRONTEND=noninteractive && \
 	apt-get update && apt-get install -y \
 	software-properties-common wget openjdk-11-jre \
 	xvfb xz-utils sudo \
-	git	curl libgl1-mesa-glx libgl1-mesa-dri mesa-utils unzip inetutils-ping emacs25 \
+	git	curl libgl1-mesa-glx libgl1-mesa-dri mesa-utils unzip inetutils-ping \
 	bison flex build-essential g++ libfl-dev \
 	libxrender1 libxtst6 libxi6 \
 	autoconf gperf \
 	tcl-dev tk-dev libgtk2.0-dev \
-	ros-melodic-mavros* ros-melodic-joy ros-melodic-rosserial ros-melodic-rosserial-arduino \
 	python-pip python-dev build-essential \
-	python-rosinstall python-rosinstall-generator python-wstool \
-	ros-melodic-rosemacs \
+	&& ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime \
+	&& dpkg-reconfigure --frontend noninteractive tzdata \
 	&& add-apt-repository ppa:ubuntuhandbook1/apps \
+	&& add-apt-repository ppa:kelleyk/emacs \
 	&& apt-get update \
-	&& apt-get install -y avrdude avrdude-doc \
+	&& apt-get install -y avrdude avrdude-doc emacs26 \
 	&& apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* && \
 	pip install --upgrade python pip virtualenv
@@ -35,14 +36,11 @@ RUN export uid=1000 gid=1000 && \
 RUN sed "s/^dialout.*/&developer/" /etc/group -i \
     && sed "s/^root.*/&developer/" /etc/group -i
 
-ENV ARDUINO_IDE_VERSION 1.8.5
+ENV ARDUINO_IDE_VERSION 1.8.12
 RUN (wget -q -O- https://downloads.arduino.cc/arduino-${ARDUINO_IDE_VERSION}-linux64.tar.xz \
 	| tar xJC /usr/local/share \
 	&& ln -s /usr/local/share/arduino-${ARDUINO_IDE_VERSION} /usr/local/share/arduino \
 	&& ln -s /usr/local/share/arduino-${ARDUINO_IDE_VERSION}/arduino /usr/local/bin/arduino)
-
-COPY ./ros_entrypoint.sh /ros_entrypoint.sh
-RUN chmod +x /ros_entrypoint.sh
 
 ENV DISPLAY :1.0
 
